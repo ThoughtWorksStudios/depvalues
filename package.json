@@ -9,7 +9,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "//": "run the following like: `npm run dbf -- INPUT.dbf`",
+    "dbf": "node dbf.js"
   },
   "author": "",
   "license": "ISC"
