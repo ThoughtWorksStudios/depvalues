@@ -106,10 +106,10 @@ create table addresses (id serial, label varchar(255), city varchar(255), state 
 -- initial CSV import
 copy t (OBJECTID,ID,ADR_NUM,ADR_NUM_SU,ADR_BLDG,ADR_UNIT_T,ADR_UNIT_I,PRE_DIR,PSTR_NAME,PSTR_TYPE,PSUF_DIR,PSTR_MOD,PSTR_FULNA,LANDMARK_N,ADR_PLACE,ADR_MUNI,ADR_CITY,ADR_ZIP5,ADR_ZIP4,ADR_ZIP9,CNTY_NAME,ADR_STATE,ADR_LABEL,ADR_BOX_TY,ADR_BOX_ID,ADR_BOXGRT,ADR_BOXGRI,ADR_BOX_LB,LON_X,LAT_Y,FEA_TYP,DATE_ED,ADD_AUTH,UID_TEXT,APF_ID,ADDR_HN,ADDR_PD,ADDR_PT,ADDR_SN,ADDR_ST,ADDR_SD,PRE_TYPE,COMP_HN)
 from '/Users/kierarad/Development/studios/dependent_values/SITUS_ADDRESS_PT.csv'
-with (format csv);
+with (format csv, header true);
 
 -- insert only desired data into destination table
-insert into addresses (label, city, state, zipcode, zip9) select ADR_LABEL, ADR_CITY, ADR_STATE, ADR_ZIP5, ADR_ZIP9 from t;
+insert into addresses (label, city, state, zipcode, zip9) select ADR_LABEL, ADR_CITY, ADR_STATE, ADR_ZIP5, ADR_ZIP9 from t where ADR_LABEL IS NOT NULL;
 
 -- cleanup
 drop table t;
