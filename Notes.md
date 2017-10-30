@@ -98,21 +98,21 @@ FOREACH (ignore IN CASE WHEN trim(line.ADR_LABEL) <> "" THEN [1] ELSE [] END |
 
 ```sql
 -- create temporary table for raw data import
-create temporary table t (OBJECTID varchar(255),ID varchar(255),ADR_NUM varchar(255),ADR_NUM_SU varchar(255),ADR_BLDG varchar(255),ADR_UNIT_T varchar(255),ADR_UNIT_I varchar(255),PRE_DIR varchar(255),PSTR_NAME varchar(255),PSTR_TYPE varchar(255),PSUF_DIR varchar(255),PSTR_MOD varchar(255),PSTR_FULNA varchar(255),LANDMARK_N varchar(255),ADR_PLACE varchar(255),ADR_MUNI varchar(255),ADR_CITY varchar(255),ADR_ZIP5 varchar(255),ADR_ZIP4 varchar(255),ADR_ZIP9 varchar(255),CNTY_NAME varchar(255),ADR_STATE varchar(255),ADR_LABEL varchar(255),ADR_BOX_TY varchar(255),ADR_BOX_ID varchar(255),ADR_BOXGRT varchar(255),ADR_BOXGRI varchar(255),ADR_BOX_LB varchar(255),LON_X varchar(255),LAT_Y varchar(255),FEA_TYP varchar(255),DATE_ED varchar(255),ADD_AUTH varchar(255),UID_TEXT varchar(255),APF_ID varchar(255),ADDR_HN varchar(255),ADDR_PD varchar(255),ADDR_PT varchar(255),ADDR_SN varchar(255),ADDR_ST varchar(255),ADDR_SD varchar(255),PRE_TYPE varchar(255),COMP_HN varchar(255));
+CREATE TEMPORARY TABLE t (OBJECTID varchar(255),ID varchar(255),ADR_NUM varchar(255),ADR_NUM_SU varchar(255),ADR_BLDG varchar(255),ADR_UNIT_T varchar(255),ADR_UNIT_I varchar(255),PRE_DIR varchar(255),PSTR_NAME varchar(255),PSTR_TYPE varchar(255),PSUF_DIR varchar(255),PSTR_MOD varchar(255),PSTR_FULNA varchar(255),LANDMARK_N varchar(255),ADR_PLACE varchar(255),ADR_MUNI varchar(255),ADR_CITY varchar(255),ADR_ZIP5 varchar(255),ADR_ZIP4 varchar(255),ADR_ZIP9 varchar(255),CNTY_NAME varchar(255),ADR_STATE varchar(255),ADR_LABEL varchar(255),ADR_BOX_TY varchar(255),ADR_BOX_ID varchar(255),ADR_BOXGRT varchar(255),ADR_BOXGRI varchar(255),ADR_BOX_LB varchar(255),LON_X varchar(255),LAT_Y varchar(255),FEA_TYP varchar(255),DATE_ED varchar(255),ADD_AUTH varchar(255),UID_TEXT varchar(255),APF_ID varchar(255),ADDR_HN varchar(255),ADDR_PD varchar(255),ADDR_PT varchar(255),ADDR_SN varchar(255),ADDR_ST varchar(255),ADDR_SD varchar(255),PRE_TYPE varchar(255),COMP_HN varchar(255));
 
 -- create destination table
-create table addresses (id serial, label varchar(255), city varchar(255), state char(2), zipcode char(5), zip9 char(10));
+CREATE TABLE addresses (id serial, label varchar(255), city varchar(255), state char(2), zipcode char(5), zip9 char(10));
 
 -- initial CSV import
-copy t (OBJECTID,ID,ADR_NUM,ADR_NUM_SU,ADR_BLDG,ADR_UNIT_T,ADR_UNIT_I,PRE_DIR,PSTR_NAME,PSTR_TYPE,PSUF_DIR,PSTR_MOD,PSTR_FULNA,LANDMARK_N,ADR_PLACE,ADR_MUNI,ADR_CITY,ADR_ZIP5,ADR_ZIP4,ADR_ZIP9,CNTY_NAME,ADR_STATE,ADR_LABEL,ADR_BOX_TY,ADR_BOX_ID,ADR_BOXGRT,ADR_BOXGRI,ADR_BOX_LB,LON_X,LAT_Y,FEA_TYP,DATE_ED,ADD_AUTH,UID_TEXT,APF_ID,ADDR_HN,ADDR_PD,ADDR_PT,ADDR_SN,ADDR_ST,ADDR_SD,PRE_TYPE,COMP_HN)
-from '/Users/kierarad/Development/studios/dependent_values/SITUS_ADDRESS_PT.csv'
-with (format csv, header true);
+COPY t (OBJECTID,ID,ADR_NUM,ADR_NUM_SU,ADR_BLDG,ADR_UNIT_T,ADR_UNIT_I,PRE_DIR,PSTR_NAME,PSTR_TYPE,PSUF_DIR,PSTR_MOD,PSTR_FULNA,LANDMARK_N,ADR_PLACE,ADR_MUNI,ADR_CITY,ADR_ZIP5,ADR_ZIP4,ADR_ZIP9,CNTY_NAME,ADR_STATE,ADR_LABEL,ADR_BOX_TY,ADR_BOX_ID,ADR_BOXGRT,ADR_BOXGRI,ADR_BOX_LB,LON_X,LAT_Y,FEA_TYP,DATE_ED,ADD_AUTH,UID_TEXT,APF_ID,ADDR_HN,ADDR_PD,ADDR_PT,ADDR_SN,ADDR_ST,ADDR_SD,PRE_TYPE,COMP_HN)
+  FROM '/Users/kierarad/Development/studios/dependent_values/SITUS_ADDRESS_PT.csv'
+  WITH (FORMAT CSV, HEADER TRUE);
 
 -- insert only desired data into destination table
-insert into addresses (label, city, state, zipcode, zip9) select ADR_LABEL, ADR_CITY, ADR_STATE, ADR_ZIP5, ADR_ZIP9 from t where ADR_LABEL IS NOT NULL;
+INSERT INTO addresses (label, city, state, zipcode, zip9) SELECT ADR_LABEL, ADR_CITY, ADR_STATE, ADR_ZIP5, ADR_ZIP9 FROM t WHERE ADR_LABEL IS NOT NULL;
 
 -- cleanup
-drop table t;
+DROP TABLE t;
 ```
 
 ## Queries:
@@ -122,7 +122,7 @@ Give me a random address from x, y zipcodes:
 SQL:
 
 ```sql
-select label || ', ' || city || ', ' || state || ' ' || zip9 from addresses where zipcode in ('72160', '72042') order by random() limit 1;
+SELECT label || ', ' || city || ', ' || state || ' ' || zip9 FROM addresses WHERE zipcode IN ('72160', '72042') ORDER BY random() LIMIT 1;
 ```
 
 Neo4J:
@@ -152,7 +152,7 @@ Give me a random address in city, state:
 SQL:
 
 ```sql
-select label || ', ' || city || ', ' || state || ' ' || zip9 from addresses where city = 'De Witt' and state = 'AR'  order by random() limit 1;
+SELECT label || ', ' || city || ', ' || state || ' ' || zip9 FROM addresses WHERE city = 'De Witt' AND state = 'AR'  ORDER BY random() LIMIT 1;
 ```
 
 Neo4J:
@@ -181,7 +181,7 @@ Give me a random address from AR, TX, or MO:
 SQL:
 
 ```sql
-select label || ', ' || city || ', ' || state || ' ' || zip9 from addresses where state in ('AR', 'TX', 'MO')  order by random() limit 1;
+SELECT label || ', ' || city || ', ' || state || ' ' || zip9 FROM addresses WHERE state IN ('AR', 'TX', 'MO') ORDER BY random() LIMIT 1;
 ```
 
 Neo4J:
@@ -209,7 +209,7 @@ MATCH (a:Address) WHERE a.state IN ['AR', 'TX', 'MO']
 
 ### PostgreSQL
 
-PostgreSQL is really fast. Insertion of 1.5M rows was within seconds -- maybe 3 seconds? All queries were fast on a single table design with no indexing. Indexing by zip5, state, and city would have certainly yielded even faster results as the cardinality is pretty good.
+PostgreSQL is really fast. Insertion of 1.5M rows was within seconds -- maybe 5-6 seconds? All queries were fast on a single table design with no indexing. Indexing by zip5, state, and city would have certainly yielded even faster results as the cardinality is pretty good.
 
 ### Neo4J
 
