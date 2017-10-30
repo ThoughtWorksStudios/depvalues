@@ -1,5 +1,27 @@
 # Notes from address problem
 
+## How to generate the CSV from DBF
+
+Using `SITUS_ADDRESS_PT.dbf` from [http://geostor-vectors.geostor.org/Location/SHP/SITUS_ADDRESS_PT.zip]
+
+```bash
+# extract just the DBF
+unzip -p SITUS_ADDRESS_PT.zip SITUS_ADDRESS_PT.dbf > SITUS_ADDRESS_PT.dbf
+
+npm install
+
+# creates SITUS_ADDRESS_PT.csv
+npm run dbf SITUS_ADDRESS_PT.dbf
+```
+
+## Splitting the CSV into individual CSVs (zips.csv, states.csv, cities.csv, addresses.csv)
+
+Granted, we didn't get a chance to use this. I had intended to use these to import into OrientDB, but it doesn't look like this is going to happen as we've learned enough from Neo4J, which is super-slow. But here it is anyway, for reference.
+
+```bash
+node conv.js SITUS_ADDRESS_PT.csv
+```
+
 ## Neo4j Import
 
 ```cypher
@@ -50,15 +72,15 @@ MERGE (addr) -[:IN]-> (zip)
 RETURN line.OBJECTID;
 ```
 
-### Alternatively, one can omit relationships entirely
+### Alternatively, one can omit relationships entirely as just use it like a table :)
 
 ```cypher
 
 CREATE INDEX ON :Address(label, city, state, zip, zip9);
 
 // Queries can be simpler and more straightforward by matching properites as with SQL.
-// Certainly this has different performance characteristics. Not sure which is faster to query,
-// but insertion is certainly much faster.
+// Certainly this has different performance characteristics. Insertion is faster, and
+// some queries were faster, while some were not.
 
 // ** NOTE: This has no clear advantage over SQL **
 
@@ -103,7 +125,7 @@ SQL:
 select label || ', ' || city || ', ' || state || ' ' || zip9 from addresses where zipcode in ('72160', '72042') order by random() limit 1;
 ```
 
-Neo4J: 50
+Neo4J:
 
 ```cypher
 MATCH (z:Zip) WHERE z.code IN ['72160', '72042']
@@ -115,7 +137,7 @@ MATCH (s:State) <-[:IN]- (a)
   LIMIT 1;
 ```
 
-Alternate Neo4J: 35
+Alternate Neo4J:
 
 ```cypher
 MATCH (a:Address) WHERE a.zip IN ['72160', '72042']
@@ -133,7 +155,7 @@ SQL:
 select label || ', ' || city || ', ' || state || ' ' || zip9 from addresses where city = 'De Witt' and state = 'AR'  order by random() limit 1;
 ```
 
-Neo4J: 12
+Neo4J:
 
 ```cypher
 MATCH (c:City) WHERE c.name = 'De Witt' AND c.state = 'AR'
@@ -144,7 +166,7 @@ MATCH (a:Address) -[:IN]-> (c)
   LIMIT 1;
 ```
 
-Alternate Neo4J: 24
+Alternate Neo4J:
 
 ```cypher
 MATCH (a:Address) WHERE a.city = 'De Witt' AND a.state = 'AR'
@@ -162,7 +184,7 @@ SQL:
 select label || ', ' || city || ', ' || state || ' ' || zip9 from addresses where state in ('AR', 'TX', 'MO')  order by random() limit 1;
 ```
 
-Neo4J: 40
+Neo4J:
 
 ```cypher
 MATCH (s:State) WHERE s.abbr IN ['AR', 'TX', 'MO']
@@ -173,7 +195,7 @@ MATCH (a:Address) -[:IN]-> (s)
   LIMIT 1;
 ```
 
-Alternate Neo4J: 40
+Alternate Neo4J:
 
 ```cypher
 MATCH (a:Address) WHERE a.state IN ['AR', 'TX', 'MO']
@@ -182,3 +204,19 @@ MATCH (a:Address) WHERE a.state IN ['AR', 'TX', 'MO']
   ORDER BY r
   LIMIT 1;
 ```
+
+## Findings
+
+### PostgreSQL
+
+PostgreSQL is really fast. Insertion of 1.5M rows was within seconds -- maybe 3 seconds? All queries were fast on a single table design with no indexing. Indexing by zip5, state, and city would have certainly yielded even faster results as the cardinality is pretty good.
+
+### Neo4J
+
+Vertex creation from LOAD CSV was tolerable, but not fast. Creating relationships was horribly slow, in part due to requiring MERGE, which essentially must MATCH, then CREATE. Indexing, per recommendation in the official documentation, did not help in any significant way. In the end, we had to reduce the set to 10,000 rows instead of the 1.5M (which would have taken at least a couple of days non-stop to finish).
+
+Query performance was quite slow by comparison. We also did not feel that the relationship modeling added any value. We did another experiment, omitting relationships entirely, by storing all the address attributes in the vertex (we realize that this defeats the purpose of a graph database). Query by city+state was about 4x faster, but other queries were about the same. Either way, no advantage over SQL
+
+### Is solving this worth it?
+
+The hardest part was finding data that was cohesive. We searched for several hours for address data that was collated, but mostly we only found list of ZIP codes and cities, GPS coordinates, and such. We tried searching the US Census for data, but there wasn't anything put together for us, until we tried [https://www.data.gov] and found address data from the Arkansas State Government. Once we had the data, the rest was not terribly interesting to solve, so maybe it's not a solution worth our efforts.
